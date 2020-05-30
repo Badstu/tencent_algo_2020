@@ -1,0 +1,6 @@
+*.pkl
+backup/
+dataset/
+.ipynb_checkpoints
+*.zip
+__pycache__/
