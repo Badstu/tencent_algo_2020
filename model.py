@@ -82,7 +82,7 @@ class lgb_model():
     
     
 class lstm_model(nn.Module):
-    def __init__(self, input_dim embedding_dim, hidden_dim, output_dim):
+    def __init__(self, input_dim, embedding_dim, hidden_dim, output_dim):
         super(lstm_model, self).__init__()
         self.input_dim = input_dim
         self.embedding_dim = embedding_dim

@@ -5,7 +5,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, roc_auc_score, accuracy_score
 
-def get_data():
+def load_data():
     train_root = "dataset/train/"
     train_user_path = os.path.join(train_root, "user.csv")
     train_ad_path = os.path.join(train_root, "ad.csv")
@@ -34,8 +34,11 @@ def get_ad_inform(creative_id, data_ad):
     return ad_inform.astype(int)
 
 
-def split_feature_target(raw_features):
-    train_features = raw_features.iloc[:, [0, 2, 3, 6, 7, 8, 9, 10]]
+def split_feature_target(raw_features, keep_user=False):
+    if keep_user == True:
+        train_features = raw_features.iloc[:, [0, 1, 2, 3, 6, 7, 8, 9, 10]]
+    else:
+        train_features = raw_features.iloc[:, [0, 2, 3, 6, 7, 8, 9, 10]]
     train_age = raw_features.iloc[:, 4]
     train_gender = raw_features.iloc[:, 5]
     
