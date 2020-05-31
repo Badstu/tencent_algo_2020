@@ -1,3 +1,4 @@
+*.w2v
 *.pkl
 backup/
 dataset/
