@@ -1,5 +1,5 @@
-from IPython.core.interactiveshell import InteractiveShell
-InteractiveShell.ast_node_interactivity = "all" 
+# from IPython.core.interactiveshell import InteractiveShell
+# InteractiveShell.ast_node_interactivity = "all" 
 
 import data
 import lightgbm as lgb
@@ -16,7 +16,6 @@ import logging
 
 from model import lgb_model
 
-%matplotlib inline
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
 
