@@ -1,4 +1,5 @@
 *.out
+*.pyc
 *.w2v
 *.pkl
 backup/

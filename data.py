@@ -37,10 +37,12 @@ def get_ad_inform(creative_id, data_ad):
 def split_feature_target(raw_features, keep_user=False):
     if keep_user == True:
         train_features = raw_features.iloc[:, [0, 1, 2, 3, 6, 7, 8, 9, 10]]
+        train_age = raw_features.iloc[:, [1, 4]]
+        train_gender = raw_features.iloc[:, [1, 5]]
     else:
         train_features = raw_features.iloc[:, [0, 2, 3, 6, 7, 8, 9, 10]]
-    train_age = raw_features.iloc[:, 4]
-    train_gender = raw_features.iloc[:, 5]
+        train_age = raw_features.iloc[:, 4]
+        train_gender = raw_features.iloc[:, 5]
     
     return train_features, train_age, train_gender
 
@@ -54,3 +56,8 @@ def measure_unique_user(record_pred, data_record, data_user, column_name="gender
     acc_score = accuracy_score(pred, target)
     
     return uni_user_pred, acc_score
+
+def word_embedding(train_features, w2v_model, column_name):
+    embedding_df = train_features[column_name].apply(lambda x: w2v_model[str(x)]).apply(pd.Series)
+    new_train_features = pd.concat([train_features, embedding_df], axis=1).drop(column_name, axis=1)
+    return new_train_features
