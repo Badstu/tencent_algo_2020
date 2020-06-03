@@ -59,10 +59,13 @@ def get_embedding_from_grouped(user_id, records, column_name, keep_uid=False):
     return embedding
 
 
-def total_embed(grouped):
-    final_embedding = pd.DataFrame(np.zeros(800, )).T
-    final_embedding.insert(0, "user_id", 0)
+def total_embed(grouped, data_type="train"):
+    id = 1
     flag = 0
+    if data_type == "train":
+        f = open("embed/train/train_embedding{}.csv".format(id), "w")
+    else:
+        f = open("embed/test/test_embedding{}.csv".format(id), "w")
     for user_id, records in tqdm(grouped):
         records = records.sort_values(by="time")
 
@@ -72,26 +75,26 @@ def total_embed(grouped):
         creative_embedding = get_embedding_from_grouped(user_id, records, column_name="creative_id")
         #product_embedding
         product_embedding = get_embedding_from_grouped(user_id, records, column_name="product_id")
-        '''
         #advertiser_embedding
         advertiser_embedding = get_embedding_from_grouped(user_id, records, column_name="advertiser_id")
         #industry_embedding
         industry_embedding = get_embedding_from_grouped(user_id, records, column_name="industry")
-        '''
 
-        embed_features = np.concatenate([ad_embedding, creative_embedding, product_embedding])
-        embed_features = pd.DataFrame([embed_features])
-        embed_features.insert(0, "user_id", user_id)
+        embed_features = np.concatenate([ad_embedding, creative_embedding, product_embedding, advertiser_embedding, industry_embedding])
+        f.write(str(user_id) + ', ' + str(list(embed_features))[1:-1] + '\n')
 
-        final_embedding = final_embedding.append(embed_features)
-        
-#         flag += 1
-#         if flag > 10:
-#             break
-    return final_embedding
+        flag += 1
+        if flag % 45000 == 0:
+            f.close()
+            id += 1
+            if data_type == "train":
+                f = open("embed/train/train_embedding{}.csv".format(id), "w")
+            else:
+                f = open("embed/test/test_embedding{}.csv".format(id), "w")
+    f.close()
 
-train_embedding = total_embed(train_grouped)
-test_embedding = total_embed(test_grouped)
+total_embed(train_grouped, data_type="train")
+total_embed(test_grouped, data_type="test")
 
-train_embedding.to_csv("checkpoints/train_embedding.csv", index=False)
-test_embedding.to_csv("checkpoints/test_embedding.csv", index=False)
+# train_embedding.to_csv("checkpoints/train_embedding.csv", index=False)
+# test_embedding.to_csv("checkpoints/test_embedding.csv", index=False)
