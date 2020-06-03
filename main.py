@@ -6,6 +6,8 @@ import numpy as np
 import os
 import sys
 import pandas as pd
+import matplotlib
+from tqdm import tqdm
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import load_iris
 from sklearn.metrics import mean_squared_error, roc_auc_score, accuracy_score
@@ -13,6 +15,7 @@ from gensim.models import word2vec, keyedvectors
 import logging
 
 from model import lgb_model
+
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
 creative_model = keyedvectors.KeyedVectors.load_word2vec_format("checkpoints/creative_model.w2v", binary=True)
@@ -21,32 +24,74 @@ product_model = keyedvectors.KeyedVectors.load_word2vec_format("checkpoints/prod
 advertiser_model = keyedvectors.KeyedVectors.load_word2vec_format("checkpoints/advertiser_model.w2v", binary=True)
 industry_model = keyedvectors.KeyedVectors.load_word2vec_format("checkpoints/industry_model.w2v", binary=True)
 
-
 train_ad, train_click, train_user, test_ad, test_click = data.load_data()
-train_user, valid_user = train_test_split(train_user, test_size=0.33, random_state=42)
-train_record = data.get_part_click(train_click, train_user)
-valid_record = data.get_part_click(train_click, valid_user)
-
 # train_record
-train_record = pd.merge(train_record, train_ad, on="creative_id")
-# valid_record
-valid_record = pd.merge(valid_record, train_ad, on="creative_id")
+train_record = pd.merge(train_click, train_ad, on="creative_id")
+# test_record
+test_record = pd.merge(test_click, test_ad, on="creative_id")
 
-train_features, train_age, train_gender = data.split_feature_target(train_record, keep_user=True)
-valid_features, valid_age, valid_gender = data.split_feature_target(train_record, keep_user=True)
+# TODO train embedding
+train_grouped = train_record.groupby("user_id")
+test_grouped = test_record.groupby("user_id")
 
-column_names = ["creative_id", "ad_id", "product_id", "advertiser_id", "industry"]
-w2v_models = [creative_model, ad_model, product_model, advertiser_model, industry_model]
-for column_name, w2v_model in zip(column_names, w2v_models):
-    print(column_name, "START")
-    if column_name == "industry":
-        embedding_df = train_features[column_name].apply(lambda x: np.zeros(100, ) if pd.isnull(x) else w2v_model[str(int(x))]).apply(pd.Series)
+def get_embedding_from_grouped(user_id, records, column_name, keep_uid=False):
+    if column_name == "ad_id":
+        model = ad_model
+    elif column_name == "creative_id":
+        model = creative_model
+    elif column_name == "industry":
+        model = industry_model
     elif column_name == "product_id":
-        embedding_df = train_features[column_name].apply(lambda x: np.zeros(200, ) if pd.isnull(x) else w2v_model[str(int(x))]).apply(pd.Series)
-    else:
-        embedding_df = train_features[column_name].apply(lambda x: w2v_model[str(x)]).apply(pd.Series)
-    train_features = pd.concat([train_features, embedding_df], axis=1).drop(column_name, axis=1)
-    print(column_name, "FINISH")
+        model = product_model
+    elif column_name == "advertiser_id":
+        model = advertiser_model
     
-train_features.to_csv("main_features.csv", index=False)
-print("finish saving csv")
+    if column_name == "industry":
+        embedding = records[column_name].apply(lambda x: np.zeros(100, ) if pd.isnull(x) else model[str(int(x))]).apply(pd.Series)
+    elif column_name == "product_id":
+        embedding = records[column_name].apply(lambda x: np.zeros(200, ) if pd.isnull(x) else model[str(int(x))]).apply(pd.Series)
+    else:
+        embedding = records[column_name].apply(lambda x: model[str(x)]).apply(pd.Series)
+    embedding = embedding.mean()
+    
+    if keep_uid:
+        embedding.insert(0, "user_id", user_id)
+    return embedding
+
+
+def total_embed(grouped):
+    final_embedding = pd.DataFrame(np.zeros(800, )).T
+    final_embedding.insert(0, "user_id", 0)
+    flag = 0
+    for user_id, records in tqdm(grouped):
+        records = records.sort_values(by="time")
+
+        # ad_embedding
+        ad_embedding = get_embedding_from_grouped(user_id, records, column_name="ad_id")
+        #creative_embedding
+        creative_embedding = get_embedding_from_grouped(user_id, records, column_name="creative_id")
+        #product_embedding
+        product_embedding = get_embedding_from_grouped(user_id, records, column_name="product_id")
+        '''
+        #advertiser_embedding
+        advertiser_embedding = get_embedding_from_grouped(user_id, records, column_name="advertiser_id")
+        #industry_embedding
+        industry_embedding = get_embedding_from_grouped(user_id, records, column_name="industry")
+        '''
+
+        embed_features = np.concatenate([ad_embedding, creative_embedding, product_embedding])
+        embed_features = pd.DataFrame([embed_features])
+        embed_features.insert(0, "user_id", user_id)
+
+        final_embedding = final_embedding.append(embed_features)
+        
+#         flag += 1
+#         if flag > 10:
+#             break
+    return final_embedding
+
+train_embedding = total_embed(train_grouped)
+test_embedding = total_embed(test_grouped)
+
+train_embedding.to_csv("checkpoints/train_embedding.csv", index=False)
+test_embedding.to_csv("checkpoints/test_embedding.csv", index=False)
