@@ -18,7 +18,8 @@ class lgb_model():
         self.params = {
             'task': 'train',
             'boosting_type': 'gbdt',  # 设置提升类型
-            'num_leaves': 47,  # 叶子节点数
+            'max_depth': 7,
+            'num_leaves': 80,  # 叶子节点数
             'learning_rate': 0.1,  # 学习速率
             'feature_fraction': 0.9,  # 建树的特征选择比例
             'bagging_fraction': 0.8,  # 建树的样本采样比例
