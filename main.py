@@ -83,14 +83,14 @@ def total_embed(grouped, data_type="train"):
         embed_features = np.concatenate([ad_embedding, creative_embedding, product_embedding, advertiser_embedding, industry_embedding])
         f.write(str(user_id) + ', ' + str(list(embed_features))[1:-1] + '\n')
 
-        flag += 1
-        if flag % 45000 == 0:
-            f.close()
-            id += 1
-            if data_type == "train":
-                f = open("embed/train/train_embedding{}.csv".format(id), "w")
-            else:
-                f = open("embed/test/test_embedding{}.csv".format(id), "w")
+#         flag += 1
+#         if flag % 45000 == 0:
+#             f.close()
+#             id += 1
+#             if data_type == "train":
+#                 f = open("embed/train/train_embedding{}.csv".format(id), "w")
+#             else:
+#                 f = open("embed/test/test_embedding{}.csv".format(id), "w")
     f.close()
 
 total_embed(train_grouped, data_type="train")

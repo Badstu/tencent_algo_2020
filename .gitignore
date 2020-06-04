@@ -1,6 +1,7 @@
 embed/
 .idea/
 *.out
+*.log
 *.pyc
 *.w2v
 *.pkl
