@@ -1,10 +1,9 @@
-# -*- coding:utf-8 -*-
-
 import data
 import lightgbm as lgb
 import numpy as np
 import os
 import sys
+import re
 import pandas as pd
 import matplotlib
 from tqdm import tqdm
@@ -18,83 +17,89 @@ from model import lgb_model
 
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
-creative_model = keyedvectors.KeyedVectors.load_word2vec_format("checkpoints/creative_model.w2v", binary=True)
-ad_model = keyedvectors.KeyedVectors.load_word2vec_format("checkpoints/ad_model.w2v", binary=True)
-product_model = keyedvectors.KeyedVectors.load_word2vec_format("checkpoints/product_model.w2v", binary=True)
-advertiser_model = keyedvectors.KeyedVectors.load_word2vec_format("checkpoints/advertiser_model.w2v", binary=True)
-industry_model = keyedvectors.KeyedVectors.load_word2vec_format("checkpoints/industry_model.w2v", binary=True)
 
-train_ad, train_click, train_user, test_ad, test_click = data.load_data()
-# train_record
-train_record = pd.merge(train_click, train_ad, on="creative_id")
-# test_record
-test_record = pd.merge(test_click, test_ad, on="creative_id")
+print("START loading train embedding and train user info")
+train_np = np.loadtxt("embed/train/train_embedding_all_1.csv", delimiter=", ")
+train_np[train_np == 0] = np.nan
 
-# TODO train embedding
-train_grouped = train_record.groupby("user_id")
-test_grouped = test_record.groupby("user_id")
+train_root = "dataset/train/"
+train_user_path = os.path.join(train_root, "user.csv")
+train_user = pd.read_csv(train_user_path, index_col="user_id")
+print("FINISH load train_np, train_user")
+print("===========================================================================")
 
-def get_embedding_from_grouped(user_id, records, column_name, keep_uid=False):
-    if column_name == "ad_id":
-        model = ad_model
-    elif column_name == "creative_id":
-        model = creative_model
-    elif column_name == "industry":
-        model = industry_model
-    elif column_name == "product_id":
-        model = product_model
-    elif column_name == "advertiser_id":
-        model = advertiser_model
-    
-    if column_name == "industry":
-        embedding = records[column_name].apply(lambda x: np.zeros(100, ) if pd.isnull(x) else model[str(int(x))]).apply(pd.Series)
-    elif column_name == "product_id":
-        embedding = records[column_name].apply(lambda x: np.zeros(200, ) if pd.isnull(x) else model[str(int(x))]).apply(pd.Series)
-    else:
-        embedding = records[column_name].apply(lambda x: model[str(x)]).apply(pd.Series)
-    embedding = embedding.mean()
-    
-    if keep_uid:
-        embedding.insert(0, "user_id", user_id)
-    return embedding
+print("START get train_features, train_age, train_gender, and random split train/valid data")
+uid = train_np[:, 0].astype(int)
+train_age = train_user.loc[uid, "age"]
+train_gender = train_user.loc[uid, "gender"]
+
+train_features = train_np[:, 1:]
+train_age = train_age.values - 1
+train_gender = train_gender.values - 1
+
+train_features, valid_features,\
+train_age, valid_age,\
+train_gender, valid_gender = train_test_split(train_features,\
+                                              train_age,\
+                                              train_gender,\
+                                              test_size=0.33,\
+                                              random_state=42)
+print("FINISH random split train/valid data")
+print("===========================================================================")
+
+print("START construct lgb train valid data")
+lgb_traindata_gender = lgb.Dataset(train_features, train_gender)
+lgb_traindata_age = lgb.Dataset(train_features, train_age)
+
+lgb_valdata_gender = lgb.Dataset(valid_features, valid_gender, reference=lgb_traindata_gender)
+lgb_valdata_age = lgb.Dataset(valid_features, valid_age, reference=lgb_traindata_age)
+print("FINISH construct lgb train valid data")
+print("===========================================================================")
 
 
-def total_embed(grouped, data_type="train"):
-    id = 1
-    flag = 0
-    if data_type == "train":
-        f = open("embed/train/train_embedding{}.csv".format(id), "w")
-    else:
-        f = open("embed/test/test_embedding{}.csv".format(id), "w")
-    for user_id, records in tqdm(grouped):
-        records = records.sort_values(by="time")
+print("START train model")
+# TODO 性别模型的训练
+gender_model = lgb_model(model_kind="gender")
+gender_model.train(lgb_traindata_gender, lgb_valdata_gender)
+gender_model.save_model()
 
-        # ad_embedding
-        ad_embedding = get_embedding_from_grouped(user_id, records, column_name="ad_id")
-        #creative_embedding
-        creative_embedding = get_embedding_from_grouped(user_id, records, column_name="creative_id")
-        #product_embedding
-        product_embedding = get_embedding_from_grouped(user_id, records, column_name="product_id")
-        #advertiser_embedding
-        advertiser_embedding = get_embedding_from_grouped(user_id, records, column_name="advertiser_id")
-        #industry_embedding
-        industry_embedding = get_embedding_from_grouped(user_id, records, column_name="industry")
+# TODO 年龄模型的训练
+age_model = lgb_model(model_kind="age")
+age_model.train(lgb_traindata_age, lgb_valdata_age)
+age_model.save_model()
+print("FINISH train model and save model")
+print("===========================================================================")
 
-        embed_features = np.concatenate([ad_embedding, creative_embedding, product_embedding, advertiser_embedding, industry_embedding])
-        f.write(str(user_id) + ', ' + str(list(embed_features))[1:-1] + '\n')
+print("START valid acc of predict")
+# TODO 性别模型的预测
+valid_gender_predict = gender_model.predict(valid_features)
+valid_gender_predict = gender_model.transform_pred(valid_gender_predict)
+acc_gender = accuracy_score(valid_gender_predict, valid_gender)
 
-#         flag += 1
-#         if flag % 45000 == 0:
-#             f.close()
-#             id += 1
-#             if data_type == "train":
-#                 f = open("embed/train/train_embedding{}.csv".format(id), "w")
-#             else:
-#                 f = open("embed/test/test_embedding{}.csv".format(id), "w")
-    f.close()
+# TODO 年龄模型的预测
+valid_age_predict = age_model.predict(valid_features)
+valid_age_predict = age_model.transform_pred(valid_age_predict)
+acc_age = accuracy_score(np.array(valid_age_predict), valid_age)
 
-total_embed(train_grouped, data_type="train")
-total_embed(test_grouped, data_type="test")
+print("In valid data, accuracy of gender is {}, accuracy of age is {}".format(acc_gender, acc_age))
+print("FINISH")
+print("===========================================================================")
 
-# train_embedding.to_csv("checkpoints/train_embedding.csv", index=False)
-# test_embedding.to_csv("checkpoints/test_embedding.csv", index=False)
+print("START test predict")
+test_np = np.loadtxt("embed/test/test_embedding_all_1.csv", delimiter=", ")
+test_np[test_np == 0] = np.nan
+test_uid = test_np[:, 0].astype(int)
+test_features = test_np[:, 1:]
+
+# TODO 性别模型的预测
+test_gender_predict = gender_model.predict(test_features)
+test_gender_predict = gender_model.transform_pred(test_gender_predict)
+# TODO 年龄模型的预测
+test_age_predict = age_model.predict(test_features)
+test_age_predict = age_model.transform_pred(test_age_predict)
+
+result = pd.DataFrame({"user_id": test_uid, "predicted_age": test_age_predict, "predicted_gender": test_gender_predict})
+result.to_csv("results.csv", index=Flase)
+
+print("FINISH ALL and save result to results.csv")
+print("===========================================================================")

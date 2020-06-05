@@ -28,7 +28,7 @@ class lgb_model():
             'verbose': 1  # <0 显示致命的, =0 显示错误 (警告), >0 显示信息
         }
         self.categorical_feature = [1, 3, 4, 5, 6, 7]
-        self.num_interations = 100
+        self.num_interations = 200
         
         self.model_kind = model_kind
         if self.model_kind == "gender":
@@ -67,21 +67,15 @@ class lgb_model():
             record_pred_label = pred.copy()
             record_pred_label[pred >= 0.5] = 1
             record_pred_label[pred < 0.5] = 0
-            record_acc = accuracy_score(record_pred_label.astype(int), valid_gender)
         elif self.model_kind == "age":
             record_pred_label = [list(x).index(max(x)) for x in pred]
-            record_acc = accuracy_score(np.array(age_pred_label), valid_age)
             
-        print("accuracy for {} is: {:.5f}".format(self.model_kind, record_acc))
-        
-        return record_pred_label
+        return record_pred_label.astype(int)
     
-    def measure(self, record_pred_label, data_record, data_user):
-        uni_pred, uni_acc = data.measure_unique_user(record_pred_label, data_record, data_user, self.model_kind)
-        return uni_pred, uni_acc
+#     def measure(self, record_pred_label, data_record, data_user):
+#         uni_pred, uni_acc = data.measure_unique_user(record_pred_label, data_record, data_user, self.model_kind)
+#         return uni_pred, uni_acc
 
-    
-    
 class lstm_model(nn.Module):
     def __init__(self, input_dim, embedding_dim, hidden_dim, output_dim):
         super(lstm_model, self).__init__()
