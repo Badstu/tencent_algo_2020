@@ -27,7 +27,7 @@ class lgb_model():
             'bagging_freq': 5,  # k 意味着每 k 次迭代执行bagging
             'verbose': 1  # <0 显示致命的, =0 显示错误 (警告), >0 显示信息
         }
-        self.categorical_feature = [1, 3, 4, 5, 6, 7]
+#         self.categorical_feature = [1, 3, 4, 5, 6, 7]
         self.num_interations = 200
         
         self.model_kind = model_kind
@@ -46,8 +46,8 @@ class lgb_model():
                         train_dataset,
                         num_boost_round=self.num_interations,
                         valid_sets=valid_dataset,
-                        early_stopping_rounds=10,
-                        categorical_feature=self.categorical_feature)        
+                        early_stopping_rounds=10)
+#                         categorical_feature=self.categorical_feature)        
     
     def get_model(self):
         return self.gbm
