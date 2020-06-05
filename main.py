@@ -17,6 +17,7 @@ from model import lgb_model
 
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
+
 print("START loading train embedding and train user info")
 train_np = np.loadtxt("embed/train/train_embedding_all_1.csv", delimiter=", ")
 train_np[train_np == 0] = np.nan
@@ -55,7 +56,6 @@ lgb_valdata_age = lgb.Dataset(valid_features, valid_age, reference=lgb_traindata
 print("FINISH construct lgb train valid data")
 print("===========================================================================")
 
-
 print("START train model")
 # TODO 性别模型的训练
 gender_model = lgb_model(model_kind="gender")
@@ -68,6 +68,14 @@ age_model.train(lgb_traindata_age, lgb_valdata_age)
 age_model.save_model()
 print("FINISH train model and save model")
 print("===========================================================================")
+
+'''
+# 导入已保存模型
+gender_model = lgb_model(model_kind="gender")
+gender_model.load_model()
+age_model = lgb_model(model_kind="age")
+age_model.load_model()
+'''
 
 print("START valid acc of predict")
 # TODO 性别模型的预测
@@ -98,7 +106,7 @@ test_age_predict = age_model.predict(test_features)
 test_age_predict = age_model.transform_pred(test_age_predict)
 
 result = pd.DataFrame({"user_id": test_uid, "predicted_age": test_age_predict, "predicted_gender": test_gender_predict})
-result.to_csv("results.csv", index=Flase)
+result.to_csv("results.csv", index=False)
 
 print("FINISH ALL and save result to results.csv")
 print("===========================================================================")

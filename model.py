@@ -40,6 +40,8 @@ class lgb_model():
             self.params["objective"] = "multiclass"
             self.params['num_class'] = 10
             self.model_save_path = "checkpoints/age_model.pkl"
+            self.num_interations = 500
+            self.num_leaves = 127
 
     def train(self, train_dataset, valid_dataset):
         self.gbm = lgb.train(self.params,
@@ -67,10 +69,11 @@ class lgb_model():
             record_pred_label = pred.copy()
             record_pred_label[pred >= 0.5] = 1
             record_pred_label[pred < 0.5] = 0
+            record_pred_label = record_pred_label.astype(int)
         elif self.model_kind == "age":
             record_pred_label = [list(x).index(max(x)) for x in pred]
             
-        return record_pred_label.astype(int)
+        return record_pred_label
     
 #     def measure(self, record_pred_label, data_record, data_user):
 #         uni_pred, uni_acc = data.measure_unique_user(record_pred_label, data_record, data_user, self.model_kind)

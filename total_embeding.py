@@ -63,9 +63,9 @@ def total_embed(grouped, data_type="train"):
     id = 1
     flag = 0
     if data_type == "train":
-        f = open("embed/train/train_embedding{}.csv".format(id), "w")
+        f = open("embed/train/train_embedding_800_{}.csv".format(id), "w")
     else:
-        f = open("embed/test/test_embedding{}.csv".format(id), "w")
+        f = open("embed/test/n_test_embedding_800_{}.csv".format(id), "w")
     for user_id, records in tqdm(grouped):
         records = records.sort_values(by="time")
 
@@ -93,8 +93,5 @@ def total_embed(grouped, data_type="train"):
 #                 f = open("embed/test/test_embedding{}.csv".format(id), "w")
     f.close()
 
-total_embed(train_grouped, data_type="train")
+# total_embed(train_grouped, data_type="train")
 total_embed(test_grouped, data_type="test")
-
-# train_embedding.to_csv("checkpoints/train_embedding.csv", index=False)
-# test_embedding.to_csv("checkpoints/test_embedding.csv", index=False)
