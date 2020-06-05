@@ -17,7 +17,6 @@ from model import lgb_model
 
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
-
 print("START loading train embedding and train user info")
 train_np = np.loadtxt("embed/train/train_embedding_all_1.csv", delimiter=", ")
 train_np[train_np == 0] = np.nan
