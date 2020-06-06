@@ -28,7 +28,7 @@ class lgb_model():
             'verbose': 1  # <0 显示致命的, =0 显示错误 (警告), >0 显示信息
         }
 #         self.categorical_feature = [1, 3, 4, 5, 6, 7]
-        self.num_interations = 200
+        self.num_interations = 100
         
         self.model_kind = model_kind
         if self.model_kind == "gender":

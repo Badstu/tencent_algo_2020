@@ -33,7 +33,7 @@ uid = train_np[:, 0].astype(int)
 train_age = train_user.loc[uid, "age"]
 train_gender = train_user.loc[uid, "gender"]
 
-train_features = train_np[:, 1:]
+train_features = train_np[:, 1:201]
 train_age = train_age.values - 1
 train_gender = train_gender.values - 1
 
@@ -56,6 +56,7 @@ lgb_valdata_age = lgb.Dataset(valid_features, valid_age, reference=lgb_traindata
 print("FINISH construct lgb train valid data")
 print("===========================================================================")
 
+
 print("START train model")
 # TODO 性别模型的训练
 gender_model = lgb_model(model_kind="gender")
@@ -68,6 +69,7 @@ age_model.train(lgb_traindata_age, lgb_valdata_age)
 age_model.save_model()
 print("FINISH train model and save model")
 print("===========================================================================")
+
 
 '''
 # 导入已保存模型
@@ -96,7 +98,7 @@ print("START test predict")
 test_np = np.loadtxt("embed/test/test_embedding_800_1.csv", delimiter=", ")
 test_np[test_np == 0] = np.nan
 test_uid = test_np[:, 0].astype(int)
-test_features = test_np[:, 1:]
+test_features = test_np[:, 1:201]
 
 # TODO 性别模型的预测
 test_gender_predict = gender_model.predict(test_features)
