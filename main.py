@@ -19,7 +19,7 @@ logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=lo
 
 
 print("START loading train embedding and train user info")
-train_np = np.loadtxt("embed/train/train_embedding_all_1.csv", delimiter=", ")
+train_np = np.loadtxt("embed/train/train_embedding_800_1.csv", delimiter=", ")
 train_np[train_np == 0] = np.nan
 
 train_root = "dataset/train/"
@@ -93,7 +93,7 @@ print("FINISH")
 print("===========================================================================")
 
 print("START test predict")
-test_np = np.loadtxt("embed/test/test_embedding_all_1.csv", delimiter=", ")
+test_np = np.loadtxt("embed/test/test_embedding_800_1.csv", delimiter=", ")
 test_np[test_np == 0] = np.nan
 test_uid = test_np[:, 0].astype(int)
 test_features = test_np[:, 1:]
