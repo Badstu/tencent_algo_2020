@@ -93,5 +93,5 @@ def total_embed(grouped, data_type="train"):
 #                 f = open("embed/test/test_embedding{}.csv".format(id), "w")
     f.close()
 
-# total_embed(train_grouped, data_type="train")
+total_embed(train_grouped, data_type="train")
 total_embed(test_grouped, data_type="test")

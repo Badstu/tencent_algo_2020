@@ -18,7 +18,7 @@ class lgb_model():
         self.params = {
             'task': 'train',
             'boosting_type': 'gbdt',  # 设置提升类型
-            'max_depth': 7,
+#             'max_depth': 7,
             'num_leaves': 80,  # 叶子节点数
             'learning_rate': 0.1,  # 学习速率
             'feature_fraction': 0.9,  # 建树的特征选择比例
@@ -28,7 +28,7 @@ class lgb_model():
             'verbose': 1  # <0 显示致命的, =0 显示错误 (警告), >0 显示信息
         }
 #         self.categorical_feature = [1, 3, 4, 5, 6, 7]
-        self.num_interations = 100
+        self.num_interations = 200
         
         self.model_kind = model_kind
         if self.model_kind == "gender":
@@ -40,8 +40,8 @@ class lgb_model():
             self.params["objective"] = "multiclass"
             self.params['num_class'] = 10
             self.model_save_path = "checkpoints/age_model.pkl"
-            self.num_interations = 500
-            self.num_leaves = 127
+            self.num_interations = 1000
+            self.num_leaves = 255
 
     def train(self, train_dataset, valid_dataset):
         self.gbm = lgb.train(self.params,
@@ -54,8 +54,11 @@ class lgb_model():
     def get_model(self):
         return self.gbm
     
-    def save_model(self):
-        self.gbm.save_model(self.model_save_path)
+    def save_model(self, path=None):
+        if path == None:
+            self.gbm.save_model(self.model_save_path)
+        else:
+            self.gbm.save_model(path)
         
     def load_model(self):
         self.gbm = lgb.Booster(model_file=self.model_save_path)

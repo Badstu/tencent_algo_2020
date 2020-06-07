@@ -61,12 +61,12 @@ print("START train model")
 # TODO 性别模型的训练
 gender_model = lgb_model(model_kind="gender")
 gender_model.train(lgb_traindata_gender, lgb_valdata_gender)
-gender_model.save_model()
+gender_model.save_model("checkpoints/gender_model_complex.pkl")
 
 # TODO 年龄模型的训练
 age_model = lgb_model(model_kind="age")
 age_model.train(lgb_traindata_age, lgb_valdata_age)
-age_model.save_model()
+age_model.save_model("checkpoints/age_model_complex.pkl")
 print("FINISH train model and save model")
 print("===========================================================================")
 
@@ -95,7 +95,7 @@ print("FINISH")
 print("===========================================================================")
 
 print("START test predict")
-test_np = np.loadtxt("embed/test/test_embedding_800_1.csv", delimiter=", ")
+test_np = np.loadtxt("embed/test/n_test_embedding_800_1.csv", delimiter=", ")
 test_np[test_np == 0] = np.nan
 test_uid = test_np[:, 0].astype(int)
 test_features = test_np[:, 1:201]
@@ -108,7 +108,9 @@ test_age_predict = age_model.predict(test_features)
 test_age_predict = age_model.transform_pred(test_age_predict)
 
 result = pd.DataFrame({"user_id": test_uid, "predicted_age": test_age_predict, "predicted_gender": test_gender_predict})
-result.to_csv("results.csv", index=False)
+result.loc[:, "predicted_age"] += 1
+result.loc[:, "predicted_gender"] += 1
+result.to_csv("results_complex.csv", index=False)
 
 print("FINISH ALL and save result to results.csv")
 print("===========================================================================")
