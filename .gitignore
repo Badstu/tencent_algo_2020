@@ -1,5 +1,6 @@
 embed/
 .idea/
+*.pth
 *.csv
 *.out
 *.log
