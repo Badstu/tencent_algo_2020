@@ -20,6 +20,7 @@ from model import lgb_model
 
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
+suffix = "_win10"
 
 class MySentences(object):
     def __init__(self, grouped_record, column_name):
@@ -52,16 +53,16 @@ advertiser_sens = MySentences(grouped_record, "advertiser_id")
 industry_sens = MySentences(grouped_record, "industry")
 
 creative_model = word2vec.Word2Vec(creative_sens, min_count=3, size=200, workers=4, sg=1, window=10)
-creative_model.wv.save_word2vec_format("checkpoints/creative_model_win10.w2v", binary=True)
+creative_model.wv.save_word2vec_format("checkpoints/creative_model{}.w2v".format(suffix), binary=True)
 
 ad_model = word2vec.Word2Vec(ad_sens, min_count=1, size=200, workers=4, sg=1, window=10)
-ad_model.wv.save_word2vec_format("checkpoints/ad_model_win10.w2v", binary=True)
+ad_model.wv.save_word2vec_format("checkpoints/ad_model{}.w2v".format(suffix), binary=True)
 
 product_model = word2vec.Word2Vec(product_sens, min_count=3, size=200, workers=4, sg=1, window=10)
-product_model.wv.save_word2vec_format("checkpoints/product_model_win10.w2v", binary=True)
+product_model.wv.save_word2vec_format("checkpoints/product_model{}.w2v".format(suffix), binary=True)
 
 advertiser_model = word2vec.Word2Vec(advertiser_sens, min_count=3, size=100, workers=4, sg=1, window=10)
-advertiser_model.wv.save_word2vec_format("checkpoints/advertiser_model_win10.w2v", binary=True)
+advertiser_model.wv.save_word2vec_format("checkpoints/advertiser_model{}.w2v".format(suffix), binary=True)
 
 industry_model = word2vec.Word2Vec(industry_sens, min_count=3, size=100, workers=4, sg=1, window=10)
-industry_model.wv.save_word2vec_format("checkpoints/industry_model_win10.w2v", binary=True)
+industry_model.wv.save_word2vec_format("checkpoints/industry_model{}.w2v".format(suffix), binary=True)

@@ -18,11 +18,13 @@ from model import lgb_model
 
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
-creative_model = keyedvectors.KeyedVectors.load_word2vec_format("checkpoints/creative_model.w2v", binary=True)
-ad_model = keyedvectors.KeyedVectors.load_word2vec_format("checkpoints/ad_model.w2v", binary=True)
-product_model = keyedvectors.KeyedVectors.load_word2vec_format("checkpoints/product_model.w2v", binary=True)
-advertiser_model = keyedvectors.KeyedVectors.load_word2vec_format("checkpoints/advertiser_model.w2v", binary=True)
-industry_model = keyedvectors.KeyedVectors.load_word2vec_format("checkpoints/industry_model.w2v", binary=True)
+
+suffix = "_win10"
+creative_model = keyedvectors.KeyedVectors.load_word2vec_format("checkpoints/creative_model{}.w2v".format(suffix), binary=True)
+ad_model = keyedvectors.KeyedVectors.load_word2vec_format("checkpoints/ad_model{}.w2v".format(suffix), binary=True)
+product_model = keyedvectors.KeyedVectors.load_word2vec_format("checkpoints/product_model{}.w2v".format(suffix), binary=True)
+advertiser_model = keyedvectors.KeyedVectors.load_word2vec_format("checkpoints/advertiser_model{}.w2v".format(suffix), binary=True)
+industry_model = keyedvectors.KeyedVectors.load_word2vec_format("checkpoints/industry_model{}.w2v".format(suffix), binary=True)
 
 train_ad, train_click, train_user, test_ad, test_click = data.load_data()
 # train_record
@@ -60,12 +62,12 @@ def get_embedding_from_grouped(user_id, records, column_name, keep_uid=False):
 
 
 def total_embed(grouped, data_type="train"):
-    id = 1
-    flag = 0
+#     id = 1
+#     flag = 0
     if data_type == "train":
-        f = open("embed/train/ag_train_embedding_800_{}.csv".format(id), "w")
+        f = open("embed/train/ag_train_embedding_800{}.csv".format(suffix), "w")
     else:
-        f = open("embed/test/ag_test_embedding_800_{}.csv".format(id), "w")
+        f = open("embed/test/ag_test_embedding_800{}.csv".format(suffix), "w")
     for user_id, records in tqdm(grouped):
         records = records.sort_values(by="time")
 
