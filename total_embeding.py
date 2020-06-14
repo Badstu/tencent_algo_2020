@@ -63,9 +63,9 @@ def total_embed(grouped, data_type="train"):
     id = 1
     flag = 0
     if data_type == "train":
-        f = open("embed/train/train_embedding_800_{}.csv".format(id), "w")
+        f = open("embed/train/ag_train_embedding_800_{}.csv".format(id), "w")
     else:
-        f = open("embed/test/n_test_embedding_800_{}.csv".format(id), "w")
+        f = open("embed/test/ag_test_embedding_800_{}.csv".format(id), "w")
     for user_id, records in tqdm(grouped):
         records = records.sort_values(by="time")
 
@@ -81,7 +81,15 @@ def total_embed(grouped, data_type="train"):
         industry_embedding = get_embedding_from_grouped(user_id, records, column_name="industry")
 
         embed_features = np.concatenate([ad_embedding, creative_embedding, product_embedding, advertiser_embedding, industry_embedding])
-        f.write(str(user_id) + ', ' + str(list(embed_features))[1:-1] + '\n')
+        
+        if data_type == "train":
+            age = train_user[train_user["user_id"] == user_id].loc[:, "age"].values[0]
+            gender = train_user[train_user["user_id"] == user_id].loc[:, "gender"].values[0]
+            s_to_f = str(user_id) + ', ' + str(list(embed_features))[1:-1] + ', ' + str(age) + ', ' + str(gender) + '\n'
+        elif data_type == "test":
+            s_to_f = str(user_id) + ', ' + str(list(embed_features))[1:-1] + '\n'
+            
+        f.write(s_to_f)
 
 #         flag += 1
 #         if flag % 45000 == 0:

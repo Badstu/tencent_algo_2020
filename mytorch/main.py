@@ -28,6 +28,12 @@ from mytorch.lstm import ClickRNN
 
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
+creative_model = keyedvectors.KeyedVectors.load_word2vec_format("checkpoints/creative_model.w2v", binary=True)
+ad_model = keyedvectors.KeyedVectors.load_word2vec_format("checkpoints/ad_model.w2v", binary=True)
+product_model = keyedvectors.KeyedVectors.load_word2vec_format("checkpoints/product_model.w2v", binary=True)
+advertiser_model = keyedvectors.KeyedVectors.load_word2vec_format("checkpoints/advertiser_model.w2v", binary=True)
+industry_model = keyedvectors.KeyedVectors.load_word2vec_format("checkpoints/industry_model.w2v", binary=True)
+
 def collate_fn(data):
     data.sort(key = lambda x: x[0], reverse=True)
     t = [x[0] for x in data]
@@ -52,7 +58,7 @@ def transform_pred(pred, model_kind):
     return record_pred_label
 
 def main(train_list, valid_list, model_type="gender"):
-    batch_size = 128
+    batch_size = 512
     hidden_dim = 200
     train_on_gpu=True
     device = torch.device("cuda") if train_on_gpu else torch.device("cpu")
@@ -64,8 +70,8 @@ def main(train_list, valid_list, model_type="gender"):
     
     max_epoch = 50
     
-    train_dataset = RecordDataset(train_list)
-    valid_dataset = RecordDataset(valid_list)
+    train_dataset = RecordDataset(train_list, creative_model, ad_model, product_model, advertiser_model, industry_model, data_type="train")
+    valid_dataset = RecordDataset(valid_list, creative_model, ad_model, product_model, advertiser_model, industry_model, data_type="train")
 #     test_dataset = RecordDataset(test_list)
     
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, 
@@ -133,19 +139,22 @@ def main(train_list, valid_list, model_type="gender"):
                 label = torch.Tensor(gender) - 1
             elif model_type == "age":
                 label = torch.Tensor(age) - 1
+                label = label.long()
+                
             embed_features = embed_features.to(device)
-            label = label.long()
             label = label.to(device)
 
             out, _ = model(embed_features)
-
+            if model_type == "gender":
+                out = out.squeeze()
+                
             loss = criterion(out, label)
             loss.backward()
 
             optimizer.step()
             optimizer.zero_grad()
 
-            acc = accuracy_score(label.cpu().data, transform_pred(out.cpu().data, model_type))
+            acc = accuracy_score(label.cpu().data.numpy(), transform_pred(out.cpu().data.numpy(), model_type))
             acc_meter.add(acc)
             loss_meter.add(loss.item())
             
@@ -184,16 +193,17 @@ def main(train_list, valid_list, model_type="gender"):
                 label = torch.Tensor(gender) - 1
             elif model_type == "age":
                 label = torch.Tensor(age) - 1
+                label = label.long()
 
             embed_features = embed_features.to(device)
-            label = label.long()
             label = label.to(device)
 
             out, _ = model(embed_features)
-
+            if model_type == "gender":
+                out = out.squeeze()
             loss = criterion(out, label)
 
-            acc = accuracy_score(label.cpu().data, transform_pred(out.cpu().data, model_type))
+            acc = accuracy_score(label.cpu().data.numpy(), transform_pred(out.cpu().data.numpy(), model_type))
             val_acc_meter.add(acc)
             val_loss_meter.add(loss.item())
             
@@ -270,22 +280,6 @@ if __name__ == "__main__":
     train_list, valid_list = train_test_split(train_list, test_size=0.33, random_state=42)
     
     print("start train!!!")
-    best_age_model = main(train_list, valid_list, model_type="age")
-    file_name = time.strftime('checkpoints/LSTM_best_age_%m%d_%H_%M_%S.pth')
-    checkpoint = {
-        "epoch": epoch,
-        "optimizer": optimizer.state_dict(),
-        "model": best_age_model.state_dict(),
-        "lr": lr
-    }
-    torch.save(checkpoint, file_name)
-    
+#     best_age_model = main(train_list, valid_list, model_type="age")
     best_gender_model = main(train_list, valid_list, model_type="gender")
-    file_name = time.strftime('checkpoints/LSTM_best_gender_%m%d_%H_%M_%S.pth')
-    checkpoint = {
-        "epoch": epoch,
-        "optimizer": optimizer.state_dict(),
-        "model": best_gender_model.state_dict(),
-        "lr": lr
-    }
-    torch.save(checkpoint, file_name)
+    

@@ -31,14 +31,15 @@ def collate_fn(data):
 
 
 class RecordDataset(Dataset):
-    def __init__(self, list_grouped):
-        self.creative_model = keyedvectors.KeyedVectors.load_word2vec_format("checkpoints/creative_model.w2v", binary=True)
-        self.ad_model = keyedvectors.KeyedVectors.load_word2vec_format("checkpoints/ad_model.w2v", binary=True)
-        self.product_model = keyedvectors.KeyedVectors.load_word2vec_format("checkpoints/product_model.w2v", binary=True)
-        self.advertiser_model = keyedvectors.KeyedVectors.load_word2vec_format("checkpoints/advertiser_model.w2v", binary=True)
-        self.industry_model = keyedvectors.KeyedVectors.load_word2vec_format("checkpoints/industry_model.w2v", binary=True)
+    def __init__(self, list_grouped, creative_model, ad_model, product_model, advertiser_model, industry_model, data_type="train"):
+        self.creative_model = creative_model
+        self.ad_model = ad_model
+        self.product_model = product_model
+        self.advertiser_model = advertiser_model
+        self.industry_model = industry_model
         
         self.list_grouped = list_grouped
+        self.data_type = data_type
     
     def __getitem__(self, index):
         # TODO
@@ -49,8 +50,11 @@ class RecordDataset(Dataset):
         record = self.list_grouped.iloc[index, :]
         user_id = record["user_id"]
         t = len(record["ad_id"])
-        age = record["age"]
-        gender = record["gender"]
+        if self.data_type == "train" or self.data_type == "valid":
+            age = record["age"]
+            gender = record["gender"]
+        elif self.data_type == "test":
+            pass
         
         # ad_embedding
         ad_embedding = self.get_embedding_from_grouped(user_id, record, column_name="ad_id")
